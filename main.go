@@ -24,7 +24,7 @@ type GitObject struct {
 func getObjectContents(objectlocation string) bytes.Buffer {
 
 	// given a path to a git object, returns the contents of the object
-	// as a string.
+	// as a buffer.
 
 	// read up the file into a buffer
 
