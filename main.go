@@ -70,36 +70,44 @@ func getObjects(gitlocation string) []GitObject {
 
 	objects := make([]GitObject, 0, 50)
 
+	// git takes the first 2 characters of the object hash, and puts the
+	// file under a directory with the name of the 2 character prefix. The
+	// object filename is the hash, minus the first two characters. For
+	// example an object with hash "abcdef" would be written to location:
+	// .git/objects/ab/cdef
+
 	for _, dir := range dirs {
 
-		if len(dir.Name()) == 2 {
+		// ignore anything other than the 2-character prefix directories
 
-			prefix := dir.Name()
-			objectPath := filepath.Join(gitlocation, "objects", prefix)
-
-			objectFiles, err2 := ioutil.ReadDir(objectPath)
-
-			if err2 != nil {
-				log.Fatal(err)
-			}
-
-			for _, o := range objectFiles {
-				fullhash := prefix + o.Name()
-				fullpath := filepath.Join(objectPath, o.Name())
-
-				content := getObjectContents(fullpath)
-
-				// the contents of a git object look like:
-				// <type> <length><\x00 byte><content...>
-				parts := strings.Split(content.String(), "\x00")
-				headerparts := strings.Split(parts[0], " ")
-
-				object := GitObject{path:fullpath, hash:fullhash, kind: headerparts[0], content:parts[1] }
-				objects = append(objects, object)
-			}
-			
+		if len(dir.Name()) != 2 {
+			continue
 		}
 
+		prefix := dir.Name()
+		prefixPath := filepath.Join(gitlocation, "objects", prefix)
+		
+		objectFiles, err2 := ioutil.ReadDir(prefixPath)
+		
+		if err2 != nil {
+			log.Fatal(err)
+		}
+
+		for _, o := range objectFiles {
+			fullhash := prefix + o.Name()
+			fullpath := filepath.Join(prefixPath, o.Name())
+
+			content := getObjectContents(fullpath)
+
+			// the contents of a git object look like:
+			// <type> <length><\x00 byte><content...>
+			parts := strings.Split(content.String(), "\x00")
+			headerparts := strings.Split(parts[0], " ")
+
+			object := GitObject{path:fullpath, hash:fullhash, kind: headerparts[0], content:parts[1] }
+			objects = append(objects, object)
+		}
+			
 	}
 
 	return objects
