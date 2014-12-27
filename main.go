@@ -11,7 +11,14 @@ import (
 	"path/filepath"
 )
 
-func getObjects(gitlocation string) []string {
+type GitObject struct {
+	path string
+	hash string
+	kind string
+	content string
+}
+
+func getObjects(gitlocation string) []GitObject {
 
 	// given the location of a .git directory, reads up the objects 
 	// inside of that directory.
@@ -22,7 +29,7 @@ func getObjects(gitlocation string) []string {
 		log.Fatal(err)
 	}
 
-	objects := make([]string, 0, 50)
+	objects := make([]GitObject, 0, 50)
 
 	for _, dir := range dirs {
 
@@ -38,7 +45,10 @@ func getObjects(gitlocation string) []string {
 			}
 
 			for _, o := range objectFiles {
-				objects = append(objects, prefix+o.Name())
+				fullhash := prefix + o.Name()
+				fullpath := filepath.Join(objectPath, o.Name())
+				object := GitObject{path:fullpath, hash:fullhash }
+				objects = append(objects, object)
 			}
 			
 		}
@@ -56,7 +66,8 @@ func main() {
 	log.Println("Starting.")
 
 	for i, s := range(getObjects(".git")) {
-		log.Printf("%d) %s", i, s)
+		log.Printf("%d) %s", i, s.path)
+		log.Printf("    %s", s.hash)
 	}
 
 }
