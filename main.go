@@ -27,6 +27,8 @@ type GitObject struct {
 
 func initDatabase(dbname string) {
 
+	// executes the required sqlite DML statements
+
 	os.Remove(dbname)
 
 	db, openerr := sql.Open("sqlite3", dbname)
@@ -37,7 +39,7 @@ func initDatabase(dbname string) {
 
 	defer db.Close()
 
-	stmt := `create table commits (hash text not null primary key, content text)`
+	stmt := "create table commits (hash text not null primary key, content text)"
 	_, stmterr := db.Exec(stmt)
 
 	if stmterr != nil {
@@ -46,9 +48,40 @@ func initDatabase(dbname string) {
 
 }
 
-//func writeObjectsToSQLite([]GitObject, dbname string) {
-//	log.Println("Doing it")
-//}
+func writeObjectsToSQLite(objects []GitObject, dbname string) {
+
+	// executes the required sqlite DML statements
+
+	db, openerr := sql.Open("sqlite3", dbname)
+
+	if openerr != nil {
+		log.Fatal(openerr)
+	}
+
+	defer db.Close()
+
+	tx, _ := db.Begin()
+
+	stmt, stmterr := tx.Prepare("insert into commits (hash, content) values (?, ?)")
+
+	if stmterr != nil {
+		log.Fatal(stmterr)
+	}
+
+	for _, o := range(objects) {
+		if o.kind == "commit" {
+			_, execerr := stmt.Exec(o.hash, o.content)
+
+			if execerr != nil {
+				log.Fatal(execerr)
+			}
+
+		}
+	}
+
+	tx.Commit()
+
+}
 
 func getObjectContents(objectlocation string) bytes.Buffer {
 
@@ -149,12 +182,19 @@ func main() {
 
 	log.Println("Starting.")
 
-	initDatabase("testing.db")
+	DATABASE_NAME := "testing.db"
+	REPOSITORY_NAME := ".git"
 
-	for i, s := range(getObjects(".git")) {
+	initDatabase(DATABASE_NAME)
+
+	objects := getObjects(REPOSITORY_NAME)
+
+	for i, s := range(objects) {
 		log.Printf("%d) %s", i, s.path)
 		log.Printf("    %s", s.hash)
 		log.Printf("    %s", s.kind)
 	}
+
+	writeObjectsToSQLite(objects, DATABASE_NAME)
 
 }
