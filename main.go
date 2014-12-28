@@ -39,7 +39,11 @@ func initDatabase(dbname string) {
 
 	defer db.Close()
 
-	stmt := "create table commits (hash text not null primary key, content text)"
+	stmt := `
+    create table commits (hash text not null primary key, content text);
+    create table trees (hash text not null primary key, content text);
+    create table blobs (hash text not null primary key, content text);
+    `
 	_, stmterr := db.Exec(stmt)
 
 	if stmterr != nil {
@@ -62,14 +66,45 @@ func writeObjectsToSQLite(objects []GitObject, dbname string) {
 
 	tx, _ := db.Begin()
 
-	stmt, stmterr := tx.Prepare("insert into commits (hash, content) values (?, ?)")
-
-	if stmterr != nil {
-		log.Fatal(stmterr)
-	}
-
 	for _, o := range(objects) {
+
 		if o.kind == "commit" {
+
+			stmt, stmterr := tx.Prepare("insert into commits (hash, content) values (?, ?)")
+
+			if stmterr != nil {
+				log.Fatal(stmterr)
+			}
+
+			_, execerr := stmt.Exec(o.hash, o.content)
+
+			if execerr != nil {
+				log.Fatal(execerr)
+			}
+
+		} else if o.kind == "tree" {
+
+
+			stmt, stmterr := tx.Prepare("insert into trees (hash, content) values (?, ?)")
+
+			if stmterr != nil {
+				log.Fatal(stmterr)
+			}
+
+			_, execerr := stmt.Exec(o.hash, o.content)
+
+			if execerr != nil {
+				log.Fatal(execerr)
+			}
+
+		} else if o.kind == "blob" {
+
+			stmt, stmterr := tx.Prepare("insert into blobs (hash, content) values (?, ?)")
+
+			if stmterr != nil {
+				log.Fatal(stmterr)
+			}
+
 			_, execerr := stmt.Exec(o.hash, o.content)
 
 			if execerr != nil {
@@ -77,6 +112,7 @@ func writeObjectsToSQLite(objects []GitObject, dbname string) {
 			}
 
 		}
+
 	}
 
 	tx.Commit()
@@ -189,10 +225,8 @@ func main() {
 
 	objects := getObjects(REPOSITORY_NAME)
 
-	for i, s := range(objects) {
-		log.Printf("%d) %s", i, s.path)
-		log.Printf("    %s", s.hash)
-		log.Printf("    %s", s.kind)
+	for i, o := range(objects) {
+		log.Printf("%4d| %s (%s)", i, o.hash, o.kind)
 	}
 
 	writeObjectsToSQLite(objects, DATABASE_NAME)
