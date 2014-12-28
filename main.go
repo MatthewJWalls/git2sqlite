@@ -6,12 +6,16 @@ package main
 
 
 import (
+	"os"
 	"log"
 	"bytes"
 	"strings"
 	"io/ioutil"
 	"path/filepath"
 	"compress/zlib"
+	"database/sql"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type GitObject struct {
@@ -20,6 +24,31 @@ type GitObject struct {
 	kind string
 	content string
 }
+
+func initDatabase(dbname string) {
+
+	os.Remove(dbname)
+
+	db, openerr := sql.Open("sqlite3", dbname)
+
+	if openerr != nil {
+		log.Fatal(openerr)
+	}
+
+	defer db.Close()
+
+	stmt := `create table commits (hash text not null primary key, content text)`
+	_, stmterr := db.Exec(stmt)
+
+	if stmterr != nil {
+		log.Fatal(stmterr)
+	}
+
+}
+
+//func writeObjectsToSQLite([]GitObject, dbname string) {
+//	log.Println("Doing it")
+//}
 
 func getObjectContents(objectlocation string) bytes.Buffer {
 
@@ -119,6 +148,8 @@ func main() {
 	// Just hacking out a prototype for now as a feasibility study.
 
 	log.Println("Starting.")
+
+	initDatabase("testing.db")
 
 	for i, s := range(getObjects(".git")) {
 		log.Printf("%d) %s", i, s.path)
