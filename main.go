@@ -25,7 +25,7 @@ func main() {
 	DATABASE_NAME := "testing.db"
 	REPOSITORY_NAME := ".git"
 
-	InitDatabase(DATABASE_NAME)
+	initDatabase(DATABASE_NAME)
 
 	objects := getObjects(REPOSITORY_NAME)
 

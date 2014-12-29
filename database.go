@@ -7,7 +7,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func InitDatabase(dbname string) {
+func initDatabase(dbname string) {
 
 	// executes the required sqlite DML statements
 
