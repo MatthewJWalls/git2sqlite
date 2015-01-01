@@ -54,5 +54,7 @@ func main() {
 		log.Printf("%4d| %s (%s)", i, o.hash, o.path)
 	}
 
+	writeRefsToSQLite(references, DATABASE_NAME)
+
 }
 

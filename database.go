@@ -25,6 +25,7 @@ func initDatabase(dbname string) {
     create table commits (hash text not null primary key, content text);
     create table trees (hash text not null primary key, content text);
     create table blobs (hash text not null primary key, content text);
+    create table refs (path text not null primary key, hash text);
     `
 	_, stmterr := db.Exec(stmt)
 
@@ -34,16 +35,48 @@ func initDatabase(dbname string) {
 
 }
 
+func writeRefsToSQLite(refs []GitReference, dbname string) {
+
+	// inserts git reference data into an sqlite database
+
+	db, openerr := sql.Open("sqlite3", dbname)
+	
+	if openerr != nil {
+		log.Fatal(openerr)
+	}
+
+	defer db.Close()
+
+	tx, _ := db.Begin()
+	stmt, stmerr := tx.Prepare("insert into refs (path, hash) values (?, ?)")
+
+	if stmerr != nil {
+		log.Fatal(stmerr)
+	}
+
+	for _, o := range(refs) {
+		_, execerr := stmt.Exec(o.path, o.hash)
+
+		if execerr != nil {
+			log.Fatal(execerr)
+		}
+
+	}
+
+	tx.Commit()
+
+}
+
 func writeObjectsToSQLite(objects []GitObject, dbname string) {
 
-	// executes the required sqlite DML statements
+	// inserts git object data into an sqlite database
 
 	db, openerr := sql.Open("sqlite3", dbname)
 
 	if openerr != nil {
 		log.Fatal(openerr)
 	}
-
+	
 	defer db.Close()
 
 	tx, _ := db.Begin()
