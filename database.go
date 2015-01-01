@@ -1,3 +1,8 @@
+
+/*
+    Functions for writing Git objects to an SQLite database.
+*/
+
 package main
 
 import (

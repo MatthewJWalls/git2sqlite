@@ -1,25 +1,23 @@
+
+/*
+    git2sqlite - converts git repositories to sqlite databases.
+
+    When ran against a git repository, will output an sqlite database
+    with the following tables:
+
+        refs :: <path, hash>
+        blobs :: <hash, content>
+        trees :: <hash, content>
+        commits :: <hash, content>
+
+    This project is a work in progress.
+*/
+
 package main
-
-// git2sqlite.
-//
-// Takes a git repository and turns it into an sqlite database.
-
 
 import (
 	"log"
 )
-
-type GitObject struct {
-	path string
-	hash string
-	kind string
-	content string
-}
-
-type GitReference struct {
-	path string
-	hash string
-}
 
 func main() {
 

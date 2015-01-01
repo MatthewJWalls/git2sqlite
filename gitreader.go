@@ -1,5 +1,9 @@
 package main
 
+/*
+    Functions for reading the contents of the Git object database.
+*/
+
 import (
 	"log"
 	"bytes"
