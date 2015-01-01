@@ -45,7 +45,39 @@ func getObjectContents(objectlocation string) bytes.Buffer {
 
 }
 
+func getReferences(gitlocation string) []GitReference {
+
+	references := make([]GitReference, 0, 10)
+
+	heads, err := ioutil.ReadDir(filepath.Join(gitlocation, "refs", "heads"))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, head := range heads {
+
+		path := filepath.Join(gitlocation, "refs", "heads", head.Name())
+		name := filepath.Join("heads", head.Name())
+
+		rawbytes, readerr := ioutil.ReadFile(path)
+
+		if readerr != nil {
+			log.Fatal(readerr)
+		}
+
+		reference := GitReference{name, strings.TrimSpace(string(rawbytes))}
+		references = append(references, reference)
+		
+	}
+
+	return references
+
+}
+
 func getObjects(gitlocation string) []GitObject {
+
+	objects := make([]GitObject, 0, 50)
 
 	// given the location of a .git directory, reads up the objects 
 	// inside of that directory.
@@ -55,8 +87,6 @@ func getObjects(gitlocation string) []GitObject {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	objects := make([]GitObject, 0, 50)
 
 	// git takes the first 2 characters of the object hash, and puts the
 	// file under a directory with the name of the 2 character prefix. The

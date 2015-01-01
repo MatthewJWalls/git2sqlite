@@ -16,6 +16,11 @@ type GitObject struct {
 	content string
 }
 
+type GitReference struct {
+	path string
+	hash string
+}
+
 func main() {
 
 	// Just hacking out a prototype for now as a feasibility study.
@@ -27,6 +32,8 @@ func main() {
 
 	initDatabase(DATABASE_NAME)
 
+	// objects
+
 	objects := getObjects(REPOSITORY_NAME)
 
 	for i, o := range(objects) {
@@ -34,6 +41,18 @@ func main() {
 	}
 
 	writeObjectsToSQLite(objects, DATABASE_NAME)
+
+	// references
+
+	log.Println()
+	log.Println("References")
+	log.Println()
+
+	references := getReferences(REPOSITORY_NAME)
+
+	for i, o := range(references) {
+		log.Printf("%4d| %s (%s)", i, o.hash, o.path)
+	}
 
 }
 
