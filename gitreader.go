@@ -2,10 +2,30 @@ package main
 
 /*
     Functions for reading the contents of the Git object database.
+
+    Git has three kinds of object: Commits, Blobs (files) and Trees (directories).
+    They are stored one-per-file under .git/objects, and each one is compressed
+    with zlib.
+
+    All Git objects have a header and a content section. The header just states 
+    what kind of object it is (tree/blob/commit), and the content is different
+    for each kind of object.
+
+    We also support the reading of references (which are things like branches). A
+    reference just points to a commit hash.
+
+    usage of this class:
+
+        repo = GitRepository{"some/repo/.git"}
+
+        blobs, trees, commits := repo.Objects()
+        refs := repo.References()
+
 */
 
 import (
 	"log"
+	"fmt"
 	"bytes"
 	"strings"
 	"io/ioutil"
@@ -13,7 +33,155 @@ import (
 	"compress/zlib"
 )
 
-func getObjectContents(objectlocation string) bytes.Buffer {
+type GitRepository struct {
+	location string
+}
+
+// returns a list of all object hashes in the repo
+func (this GitRepository) Hashes() []string {
+
+	hashes := make([]string, 0, 20)
+
+	dirs, err := ioutil.ReadDir(filepath.Join(this.location, "objects"))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// for all directories in objects directory
+
+	for _, dir := range dirs {
+
+		// ignore if they're not 2 characters
+
+		if len(dir.Name()) != 2 {
+			continue
+		}
+
+		// list all files in that directory
+
+		minorpath := filepath.Join(this.location, "objects", dir.Name())
+		objectFiles, err2 := ioutil.ReadDir(minorpath)
+		
+		if err2 != nil {
+			log.Fatal(err)
+		}
+		
+		// add the hash
+
+		for _, o := range objectFiles {
+			hash := dir.Name() + o.Name()
+			hashes = append(hashes, hash)
+		}
+			
+	}
+
+	return hashes
+
+}
+
+// returns all the blobs, trees and commit objects in a git repo
+func (this GitRepository) Objects() ([]GitBlob, []GitTree, []GitCommit) {
+
+	blobs := make([]GitBlob, 0, 10)
+	trees := make([]GitTree, 0, 10)
+	commits := make([]GitCommit, 0, 10)
+
+	objectToBlob := func(o GitObject) GitBlob {
+		return GitBlob{o.path, o.hash, o.content}
+	}
+
+	objectToTree := func(o GitObject) GitTree {
+
+		// tree format is <mode> <filename><null byte><20 byte sha1>
+
+		files := make([]string, 0, 0)
+		peg := 0
+
+		for i := 0; i < len(o.content); i+=1 {
+			if o.content[i] == '\x00' {
+				filename := o.content[peg+1:i]
+				//hash := o.content[i+1:i+21]
+				files = append(files, strings.Split(fmt.Sprintf("%s", filename), " ")[1])
+				//files = append(files, fmt.Sprintf("%s", filename))
+				i += 20;
+				peg = i;
+			}
+		}
+
+		return GitTree{o.path, o.hash, files}
+
+	}
+
+	objectToCommit := func(o GitObject) GitCommit {
+
+		var commit GitCommit
+
+		if strings.Contains(o.content, "parent:") {
+			lines         := strings.SplitN(o.content, "\n", 4)
+			treeLine      := lines[0]
+			parentLine    := lines[1]
+			authorLine    := lines[2]
+			committerLine := lines[3]
+			message       := lines[4]
+			commit = GitCommit{
+				o.path,
+				o.hash,
+				strings.Split(parentLine, " ")[1],
+				strings.Split(authorLine, " ")[1], 
+				strings.Split(committerLine, " ")[1],
+				"date",
+				strings.Split(treeLine, " ")[1],
+				message,
+			}
+		} else {
+			lines         := strings.SplitN(o.content, "\n", 5)
+			treeLine      := lines[0]
+			authorLine    := lines[1]
+			committerLine := lines[2]
+			message       := lines[3]
+			commit = GitCommit{
+				o.path,
+				o.hash,
+				"",
+				strings.Split(authorLine, " ")[1],
+				strings.Split(committerLine, " ")[1],
+				"date",
+				strings.Split(treeLine, " ")[1],
+				message,
+			}
+		}
+
+		return commit
+
+	}
+
+	for _, h := range this.Hashes() {
+		
+		path := filepath.Join(this.location, "objects", h[:2], h[2:])
+		content := this.getObjectContents(path)
+		
+		parts := strings.SplitN(content.String(), "\x00", 2)
+		kind := strings.Split(parts[0], " ")[0]
+		
+		object := GitObject{path:path, hash:h, kind:kind, content:parts[1] }
+
+		switch kind {
+		case "blob":
+			blobs = append(blobs, objectToBlob(object))
+		case "tree":
+			trees = append(trees, objectToTree(object))
+		case "commit":
+			commits = append(commits, objectToCommit(object))
+		}
+
+	}
+	
+	return blobs, trees, commits
+
+}
+
+func (this GitRepository) getObjectContents(objectlocation string) bytes.Buffer {
 
 	// given a path to a git object, returns the contents of the object
 	// as a buffer.
@@ -49,11 +217,11 @@ func getObjectContents(objectlocation string) bytes.Buffer {
 
 }
 
-func getReferences(gitlocation string) []GitReference {
+func (this GitRepository) References() []GitReference {
 
 	references := make([]GitReference, 0, 10)
 
-	heads, err := ioutil.ReadDir(filepath.Join(gitlocation, "refs", "heads"))
+	heads, err := ioutil.ReadDir(filepath.Join(this.location, "refs", "heads"))
 
 	if err != nil {
 		log.Fatal(err)
@@ -61,7 +229,7 @@ func getReferences(gitlocation string) []GitReference {
 
 	for _, head := range heads {
 
-		path := filepath.Join(gitlocation, "refs", "heads", head.Name())
+		path := filepath.Join(this.location, "refs", "heads", head.Name())
 		name := filepath.Join("heads", head.Name())
 
 		rawbytes, readerr := ioutil.ReadFile(path)
@@ -76,63 +244,6 @@ func getReferences(gitlocation string) []GitReference {
 	}
 
 	return references
-
-}
-
-func getObjects(gitlocation string) []GitObject {
-
-	objects := make([]GitObject, 0, 50)
-
-	// given the location of a .git directory, reads up the objects 
-	// inside of that directory.
-
-	dirs, err := ioutil.ReadDir(filepath.Join(gitlocation, "objects"))
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// git takes the first 2 characters of the object hash, and puts the
-	// file under a directory with the name of the 2 character prefix. The
-	// object filename is the hash, minus the first two characters. For
-	// example an object with hash "abcdef" would be written to location:
-	// .git/objects/ab/cdef
-
-	for _, dir := range dirs {
-
-		// ignore anything other than the 2-character prefix directories
-
-		if len(dir.Name()) != 2 {
-			continue
-		}
-
-		prefix := dir.Name()
-		prefixPath := filepath.Join(gitlocation, "objects", prefix)
-		
-		objectFiles, err2 := ioutil.ReadDir(prefixPath)
-		
-		if err2 != nil {
-			log.Fatal(err)
-		}
-
-		for _, o := range objectFiles {
-			fullhash := prefix + o.Name()
-			fullpath := filepath.Join(prefixPath, o.Name())
-
-			content := getObjectContents(fullpath)
-
-			// the contents of a git object look like:
-			// <type> <length><\x00 byte><content...>
-			parts := strings.Split(content.String(), "\x00")
-			headerparts := strings.Split(parts[0], " ")
-
-			object := GitObject{path:fullpath, hash:fullhash, kind: headerparts[0], content:parts[1] }
-			objects = append(objects, object)
-		}
-			
-	}
-
-	return objects
 
 }
 

@@ -12,8 +12,30 @@ type GitObject struct {
 	content string
 }
 
+type GitCommit struct {
+	path string
+	hash string
+	parent string
+	author string
+	committer string
+	date string
+	tree string
+	message string
+}
+
+type GitTree struct {
+	path string
+	hash string
+	files []string
+}
+
+type GitBlob struct {
+	path string
+	hash string
+	content string
+}
+
 type GitReference struct {
 	path string
 	hash string
 }
-

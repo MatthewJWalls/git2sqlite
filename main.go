@@ -30,15 +30,25 @@ func main() {
 
 	initDatabase(DATABASE_NAME)
 
+	repo := GitRepository{REPOSITORY_NAME}
+
 	// objects
 
-	objects := getObjects(REPOSITORY_NAME)
+	blobs, trees, commits := repo.Objects()
 
-	for i, o := range(objects) {
-		log.Printf("%4d| %s (%s)", i, o.hash, o.kind)
+	for _, o := range(blobs) {
+		log.Printf("%s (blob)", o.hash)
 	}
 
-	writeObjectsToSQLite(objects, DATABASE_NAME)
+	for _, o := range(trees) {
+		log.Printf("%s (tree)", o.hash)
+	}
+
+	for _, o := range(commits) {
+		log.Printf("%s (commit)", o.hash)
+	}
+
+	//writeObjectsToSQLite(objects, DATABASE_NAME)
 
 	// references
 
@@ -46,13 +56,11 @@ func main() {
 	log.Println("References")
 	log.Println()
 
-	references := getReferences(REPOSITORY_NAME)
-
-	for i, o := range(references) {
-		log.Printf("%4d| %s (%s)", i, o.hash, o.path)
+	for _, o := range(repo.References()) {
+		log.Printf("%s (%s)", o.hash, o.path)
 	}
 
-	writeRefsToSQLite(references, DATABASE_NAME)
+	//writeRefsToSQLite(references, DATABASE_NAME)
 
 }
 
