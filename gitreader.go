@@ -101,9 +101,7 @@ func (this GitRepository) Objects() ([]GitBlob, []GitTree, []GitCommit) {
 		for i := 0; i < len(o.content); i+=1 {
 			if o.content[i] == '\x00' {
 				filename := o.content[peg+1:i]
-				//hash := o.content[i+1:i+21]
 				files = append(files, strings.Split(fmt.Sprintf("%s", filename), " ")[1])
-				//files = append(files, fmt.Sprintf("%s", filename))
 				i += 20;
 				peg = i;
 			}
@@ -115,41 +113,27 @@ func (this GitRepository) Objects() ([]GitBlob, []GitTree, []GitCommit) {
 
 	objectToCommit := func(o GitObject) GitCommit {
 
-		var commit GitCommit
+		top := strings.SplitN(o.content, "\n\n", 2)[0]
+		msg := strings.SplitN(o.content, "\n\n", 2)[1]
 
-		if strings.Contains(o.content, "parent:") {
-			lines         := strings.SplitN(o.content, "\n", 4)
-			treeLine      := lines[0]
-			parentLine    := lines[1]
-			authorLine    := lines[2]
-			committerLine := lines[3]
-			message       := lines[4]
-			commit = GitCommit{
-				o.path,
-				o.hash,
-				strings.Split(parentLine, " ")[1],
-				strings.Split(authorLine, " ")[1], 
-				strings.Split(committerLine, " ")[1],
-				"date",
-				strings.Split(treeLine, " ")[1],
-				message,
-			}
-		} else {
-			lines         := strings.SplitN(o.content, "\n", 5)
-			treeLine      := lines[0]
-			authorLine    := lines[1]
-			committerLine := lines[2]
-			message       := lines[3]
-			commit = GitCommit{
-				o.path,
-				o.hash,
-				"",
-				strings.Split(authorLine, " ")[1],
-				strings.Split(committerLine, " ")[1],
-				"date",
-				strings.Split(treeLine, " ")[1],
-				message,
-			}
+		commit := GitCommit{path: o.path, hash: o.hash, message:msg, parents:make([]string, 0, 2)}
+
+		for _, line := range(strings.Split(top, "\n")) {
+
+			parts := strings.Split(line, " ")
+
+			switch parts[0] {
+			case "tree":
+				commit.tree = parts[1]
+			case "parent":
+				commit.parents = append(commit.parents, parts[1])
+			case "author":
+				commit.author = parts[1]
+			case "committer":
+				commit.committer = parts[1]
+				commit.date = parts[len(parts)-2]
+			}			
+
 		}
 
 		return commit

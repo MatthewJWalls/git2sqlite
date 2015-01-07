@@ -15,7 +15,7 @@ type GitObject struct {
 type GitCommit struct {
 	path string
 	hash string
-	parent string
+	parents []string
 	author string
 	committer string
 	date string
