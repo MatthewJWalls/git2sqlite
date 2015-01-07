@@ -37,49 +37,6 @@ type GitRepository struct {
 	location string
 }
 
-// returns a list of all object hashes in the repo
-func (this GitRepository) Hashes() []string {
-
-	hashes := make([]string, 0, 20)
-
-	dirs, err := ioutil.ReadDir(filepath.Join(this.location, "objects"))
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// for all directories in objects directory
-
-	for _, dir := range dirs {
-
-		// ignore if they're not 2 characters
-
-		if len(dir.Name()) != 2 {
-			continue
-		}
-
-		// list all files in that directory
-
-		minorpath := filepath.Join(this.location, "objects", dir.Name())
-		objectFiles, err2 := ioutil.ReadDir(minorpath)
-		
-		if err2 != nil {
-			log.Fatal(err)
-		}
-		
-		// add the hash
-
-		for _, o := range objectFiles {
-			hash := dir.Name() + o.Name()
-			hashes = append(hashes, hash)
-		}
-			
-	}
-
-	return hashes
-
-}
-
 // returns all the blobs, trees and commit objects in a git repo
 func (this GitRepository) Objects() ([]GitBlob, []GitTree, []GitCommit) {
 
@@ -92,8 +49,6 @@ func (this GitRepository) Objects() ([]GitBlob, []GitTree, []GitCommit) {
 	}
 
 	objectToTree := func(o GitObject) GitTree {
-
-		// tree format is <mode> <filename><null byte><20 byte sha1>
 
 		files := make([]string, 0, 0)
 		peg := 0
@@ -165,42 +120,7 @@ func (this GitRepository) Objects() ([]GitBlob, []GitTree, []GitCommit) {
 
 }
 
-func (this GitRepository) getObjectContents(objectlocation string) bytes.Buffer {
-
-	// given a path to a git object, returns the contents of the object
-	// as a buffer.
-
-	// read up the file into a buffer
-
-	rawbytes, readerr := ioutil.ReadFile(objectlocation)
-
-	if readerr != nil {
-		log.Fatal(readerr)
-	}
-
-	buff := bytes.NewReader(rawbytes)
-
-	// ok, now we can use zlib to decompress it.
-
-	r, compresserr := zlib.NewReader(buff)
-
-	if compresserr != nil {
-		log.Fatal(compresserr)
-	}
-
-	// create & return an output buffer of the decompressed data
-
-	outbuffer := new(bytes.Buffer)
-	_, err := outbuffer.ReadFrom(r)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return *outbuffer
-
-}
-
+// returns a list of all local (not remote) refs. Which are basically branches.
 func (this GitRepository) References() []GitReference {
 
 	references := make([]GitReference, 0, 10)
@@ -228,6 +148,86 @@ func (this GitRepository) References() []GitReference {
 	}
 
 	return references
+
+}
+
+// utility function: returns a list of all object hashes in the repo
+func (this GitRepository) Hashes() []string {
+
+	hashes := make([]string, 0, 20)
+
+	dirs, err := ioutil.ReadDir(filepath.Join(this.location, "objects"))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// for all directories in objects directory
+
+	for _, dir := range dirs {
+
+		// ignore if they're not 2 characters
+
+		if len(dir.Name()) != 2 {
+			continue
+		}
+
+		// list all files in that directory
+
+		minorpath := filepath.Join(this.location, "objects", dir.Name())
+		objectFiles, err2 := ioutil.ReadDir(minorpath)
+		
+		if err2 != nil {
+			log.Fatal(err)
+		}
+		
+		// add the hash
+
+		for _, o := range objectFiles {
+			hash := dir.Name() + o.Name()
+			hashes = append(hashes, hash)
+		}
+			
+	}
+
+	return hashes
+
+}
+
+// utility function: given a path to a git object, returns the contents of the object
+func (this GitRepository) getObjectContents(objectlocation string) bytes.Buffer {
+
+	// The object content is compressed using zlib, we need to read it up and
+	// decompress it.
+
+	// read up the raw file into a buffer
+
+	rawbytes, readerr := ioutil.ReadFile(objectlocation)
+
+	if readerr != nil {
+		log.Fatal(readerr)
+	}
+
+	buff := bytes.NewReader(rawbytes)
+
+	// ok, now we can use zlib to decompress it.
+
+	r, compresserr := zlib.NewReader(buff)
+
+	if compresserr != nil {
+		log.Fatal(compresserr)
+	}
+
+	// create & return an output buffer of the decompressed data
+
+	outbuffer := new(bytes.Buffer)
+	_, err := outbuffer.ReadFrom(r)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return *outbuffer
 
 }
 
