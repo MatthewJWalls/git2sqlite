@@ -26,13 +26,19 @@ type GitCommit struct {
 type GitTree struct {
 	path string
 	hash string
-	files []string
+	files []GitTreeFile
 }
 
 type GitBlob struct {
 	path string
 	hash string
 	content string
+}
+
+type GitTreeFile struct {
+	mode string
+    name string
+	hash string
 }
 
 type GitReference struct {

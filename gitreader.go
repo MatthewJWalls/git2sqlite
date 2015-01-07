@@ -50,18 +50,17 @@ func (this GitRepository) Objects() ([]GitBlob, []GitTree, []GitCommit) {
 
 	objectToTree := func(o GitObject) GitTree {
 
-		files := make([]string, 0, 0)
+		files := make([]GitTreeFile, 0, 0)
 		peg := 0
 
 		for i := 0; i < len(o.content); i+=1 {
 			if o.content[i] == '\x00' {
-				filename := o.content[peg+1:i]
+				mode := strings.SplitN(o.content[peg+1:i], " ", 2)[0]
+				name := strings.SplitN(o.content[peg+1:i], " ", 2)[1]
 				hash := fmt.Sprintf("%x", o.content[i+1:i+21])
-				files = append(files, fmt.Sprintf("%x", hash))
+				files = append(files, GitTreeFile{mode, name, hash})
 				i += 20
 				peg = i
-				_ = peg
-				_ = filename
 			}
 		}
 
