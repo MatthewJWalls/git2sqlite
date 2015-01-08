@@ -69,16 +69,6 @@ func (this SQLiteDatabase) WriteRepository(repo GitRepository) {
 
 	blobs, trees, commits := repo.Objects()
 
-	this.writeBlobs(blobs)
-	this.writeTrees(trees)
-	this.writeCommits(commits)
-	this.writeRefsToSQLite(repo.References())
-
-}
-
-// utility function: inserts git reference data
-func (this SQLiteDatabase) writeRefsToSQLite(refs []GitReference ) {
-
 	db, openerr := sql.Open("sqlite3", this.fileName)
 	
 	if openerr != nil {
@@ -88,6 +78,19 @@ func (this SQLiteDatabase) writeRefsToSQLite(refs []GitReference ) {
 	defer db.Close()
 
 	tx, _ := db.Begin()
+
+	this.writeBlobs(tx, blobs)
+	this.writeTrees(tx, trees)
+	this.writeCommits(tx, commits)
+	this.writeRefsToSQLite(tx, repo.References())
+
+	tx.Commit()
+
+}
+
+// utility function: inserts git reference data
+func (this SQLiteDatabase) writeRefsToSQLite(tx *sql.Tx, refs []GitReference) {
+
 	stmt, stmerr := tx.Prepare("insert into refs values (?, ?)")
 
 	if stmerr != nil {
@@ -103,21 +106,10 @@ func (this SQLiteDatabase) writeRefsToSQLite(refs []GitReference ) {
 
 	}
 
-	tx.Commit()
-
 }
 
 // utility function: insert commit object data
-func (this SQLiteDatabase) writeCommits(commits []GitCommit) {
-
-	db, openerr := sql.Open("sqlite3", this.fileName)
-
-	if openerr != nil {
-		log.Fatal(openerr)
-	}
-	
-	defer db.Close()
-	tx, _ := db.Begin()
+func (this SQLiteDatabase) writeCommits(tx *sql.Tx, commits []GitCommit) {
 
 	for _, o := range(commits) {
 
@@ -154,21 +146,10 @@ func (this SQLiteDatabase) writeCommits(commits []GitCommit) {
 
 	}
 
-	tx.Commit()
-
 }
 
 // utility function: insert blob object data
-func (this SQLiteDatabase) writeBlobs(blobs []GitBlob) {
-
-	db, openerr := sql.Open("sqlite3", this.fileName)
-
-	if openerr != nil {
-		log.Fatal(openerr)
-	}
-	
-	defer db.Close()
-	tx, _ := db.Begin()
+func (this SQLiteDatabase) writeBlobs(tx *sql.Tx, blobs []GitBlob) {
 
 	for _, o := range(blobs) {
 
@@ -186,21 +167,10 @@ func (this SQLiteDatabase) writeBlobs(blobs []GitBlob) {
 
 	}
 
-	tx.Commit()
-
 }
 
 // utility function: insert tree object data
-func (this SQLiteDatabase) writeTrees(trees []GitTree) {
-
-	db, openerr := sql.Open("sqlite3", this.fileName)
-
-	if openerr != nil {
-		log.Fatal(openerr)
-	}
-	
-	defer db.Close()
-	tx, _ := db.Begin()
+func (this SQLiteDatabase) writeTrees(tx *sql.Tx, trees []GitTree) {
 
 	for _, o := range(trees) {
 
@@ -221,7 +191,5 @@ func (this SQLiteDatabase) writeTrees(trees []GitTree) {
 		}
 
 	}
-
-	tx.Commit()
 
 }
