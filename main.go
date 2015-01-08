@@ -21,16 +21,14 @@ import (
 
 func main() {
 
-	// Just hacking out a prototype for now as a feasibility study.
-
-	log.Println("Starting.")
-
 	DATABASE_NAME := "testing.db"
 	REPOSITORY_NAME := ".git"
 
-	initDatabase(DATABASE_NAME)
-
 	repo := GitRepository{REPOSITORY_NAME}
+	db := SQLiteDatabase{DATABASE_NAME}
+
+	db.Create()
+	db.WriteRepository(repo)
 
 	// objects
 
@@ -48,19 +46,11 @@ func main() {
 		log.Printf("%s (commit)", o.hash)
 	}
 
-	//writeObjectsToSQLite(objects, DATABASE_NAME)
-
 	// references
 
-	log.Println()
-	log.Println("References")
-	log.Println()
-
 	for _, o := range(repo.References()) {
-		log.Printf("%s (%s)", o.hash, o.path)
+		log.Printf("%s (ref %s)", o.hash, o.path)
 	}
-
-	//writeRefsToSQLite(references, DATABASE_NAME)
 
 }
 

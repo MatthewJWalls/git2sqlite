@@ -12,13 +12,16 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func initDatabase(dbname string) {
+type SQLiteDatabase struct {
+	fileName string
+}
 
-	// executes the required sqlite DML statements
+// recreates the database from scratch
+func (this SQLiteDatabase) Create() {
 
-	os.Remove(dbname)
+	os.Remove(this.fileName)
 
-	db, openerr := sql.Open("sqlite3", dbname)
+	db, openerr := sql.Open("sqlite3", this.fileName)
 
 	if openerr != nil {
 		log.Fatal(openerr)
@@ -27,10 +30,31 @@ func initDatabase(dbname string) {
 	defer db.Close()
 
 	stmt := `
-    create table commits (hash text not null primary key, content text);
-    create table trees (hash text not null primary key, content text);
-    create table blobs (hash text not null primary key, content text);
+    create table commits (
+      commit_hash text not null primary key,
+      parent_a text,
+      parent_b text,
+      author text not null,
+      committer text not null,
+      date number not null,
+      tree_hash not null,
+      message text
+    );
+
+    create table trees (
+      tree_hash text not null, 
+      blob_hash text not null,
+      file_name text not null,
+      file_mode text not null
+    );
+
+    create table blobs (
+      blob_hash text not null primary key, 
+      content text
+    );
+
     create table refs (path text not null primary key, hash text);
+
     `
 	_, stmterr := db.Exec(stmt)
 
@@ -40,11 +64,22 @@ func initDatabase(dbname string) {
 
 }
 
-func writeRefsToSQLite(refs []GitReference, dbname string) {
+// writes contents of the git repository to the database
+func (this SQLiteDatabase) WriteRepository(repo GitRepository) {
 
-	// inserts git reference data into an sqlite database
+	blobs, trees, commits := repo.Objects()
 
-	db, openerr := sql.Open("sqlite3", dbname)
+	this.writeBlobs(blobs)
+	this.writeTrees(trees)
+	this.writeCommits(commits)
+	this.writeRefsToSQLite(repo.References())
+
+}
+
+// utility function: inserts git reference data
+func (this SQLiteDatabase) writeRefsToSQLite(refs []GitReference ) {
+
+	db, openerr := sql.Open("sqlite3", this.fileName)
 	
 	if openerr != nil {
 		log.Fatal(openerr)
@@ -53,7 +88,7 @@ func writeRefsToSQLite(refs []GitReference, dbname string) {
 	defer db.Close()
 
 	tx, _ := db.Begin()
-	stmt, stmerr := tx.Prepare("insert into refs (path, hash) values (?, ?)")
+	stmt, stmerr := tx.Prepare("insert into refs values (?, ?)")
 
 	if stmerr != nil {
 		log.Fatal(stmerr)
@@ -72,60 +107,112 @@ func writeRefsToSQLite(refs []GitReference, dbname string) {
 
 }
 
-func writeObjectsToSQLite(objects []GitObject, dbname string) {
+// utility function: insert commit object data
+func (this SQLiteDatabase) writeCommits(commits []GitCommit) {
 
-	// inserts git object data into an sqlite database
-
-	db, openerr := sql.Open("sqlite3", dbname)
+	db, openerr := sql.Open("sqlite3", this.fileName)
 
 	if openerr != nil {
 		log.Fatal(openerr)
 	}
 	
 	defer db.Close()
-
 	tx, _ := db.Begin()
 
-	for _, o := range(objects) {
+	for _, o := range(commits) {
 
-		if o.kind == "commit" {
+		stmt, stmterr := tx.Prepare("insert into commits values (?, ?, ?, ?, ?, ?, ?, ?)")
 
-			stmt, stmterr := tx.Prepare("insert into commits (hash, content) values (?, ?)")
+		if stmterr != nil {
+			log.Fatal(stmterr)
+		}
+
+		var parentA string
+		var parentB string
+
+		if len(o.parents) == 2 {
+			parentA = o.parents[0]
+			parentB = o.parents[1]
+		} else if len(o.parents) == 1 {
+			parentA = o.parents[0]
+		}
+
+        _, execerr := stmt.Exec(
+			o.hash, 
+			parentA, 
+			parentB, 
+			o.author, 
+			o.committer, 
+			o.date, 
+			o.tree, 
+			o.message,
+		)
+
+		if execerr != nil {
+			log.Fatal(execerr)
+		}
+
+	}
+
+	tx.Commit()
+
+}
+
+// utility function: insert blob object data
+func (this SQLiteDatabase) writeBlobs(blobs []GitBlob) {
+
+	db, openerr := sql.Open("sqlite3", this.fileName)
+
+	if openerr != nil {
+		log.Fatal(openerr)
+	}
+	
+	defer db.Close()
+	tx, _ := db.Begin()
+
+	for _, o := range(blobs) {
+
+		stmt, stmterr := tx.Prepare("insert into blobs values (?, ?)")
+
+		if stmterr != nil {
+			log.Fatal(stmterr)
+		}
+
+		_, execerr := stmt.Exec(o.hash, o.content)
+
+		if execerr != nil {
+			log.Fatal(execerr)
+		}
+
+	}
+
+	tx.Commit()
+
+}
+
+// utility function: insert tree object data
+func (this SQLiteDatabase) writeTrees(trees []GitTree) {
+
+	db, openerr := sql.Open("sqlite3", this.fileName)
+
+	if openerr != nil {
+		log.Fatal(openerr)
+	}
+	
+	defer db.Close()
+	tx, _ := db.Begin()
+
+	for _, o := range(trees) {
+
+		for _, f := range(o.files){
+
+			stmt, stmterr := tx.Prepare("insert into trees values (?, ?, ?, ?)")
 
 			if stmterr != nil {
 				log.Fatal(stmterr)
 			}
 
-			_, execerr := stmt.Exec(o.hash, o.content)
-
-			if execerr != nil {
-				log.Fatal(execerr)
-			}
-
-		} else if o.kind == "tree" {
-
-
-			stmt, stmterr := tx.Prepare("insert into trees (hash, content) values (?, ?)")
-
-			if stmterr != nil {
-				log.Fatal(stmterr)
-			}
-
-			_, execerr := stmt.Exec(o.hash, o.content)
-
-			if execerr != nil {
-				log.Fatal(execerr)
-			}
-
-		} else if o.kind == "blob" {
-
-			stmt, stmterr := tx.Prepare("insert into blobs (hash, content) values (?, ?)")
-
-			if stmterr != nil {
-				log.Fatal(stmterr)
-			}
-
-			_, execerr := stmt.Exec(o.hash, o.content)
+			_, execerr := stmt.Exec(o.hash, f.hash, f.name, f.mode)
 
 			if execerr != nil {
 				log.Fatal(execerr)
