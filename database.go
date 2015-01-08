@@ -129,7 +129,7 @@ func (this SQLiteDatabase) writeCommits(tx *sql.Tx, commits []GitCommit) {
 			parentA = o.parents[0]
 		}
 
-        _, execerr := stmt.Exec(
+		_, execerr := stmt.Exec(
 			o.hash, 
 			parentA, 
 			parentB, 
