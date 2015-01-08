@@ -17,12 +17,24 @@ package main
 
 import (
 	"log"
+	"os"
+	"path/filepath"
 )
 
 func main() {
 
-	DATABASE_NAME := "testing.db"
-	REPOSITORY_NAME := ".git"
+	// check args
+
+	var location string
+
+	if len(os.Args) == 2 {
+		location, _ = filepath.Abs(os.Args[1])
+	} else {
+		location, _ = filepath.Abs(filepath.Dir(os.Args[0]))
+	}
+
+	REPOSITORY_NAME := filepath.Join(location, ".git")
+	DATABASE_NAME := filepath.Base(location)+".db"
 
 	repo := GitRepository{REPOSITORY_NAME}
 	db := SQLiteDatabase{DATABASE_NAME}
