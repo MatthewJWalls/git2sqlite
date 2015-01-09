@@ -42,27 +42,7 @@ func main() {
 	db.Create()
 	db.WriteRepository(repo)
 
-	// objects
-
-	blobs, trees, commits := repo.Objects()
-
-	for _, o := range(blobs) {
-		log.Printf("%s (blob)", o.hash)
-	}
-
-	for _, o := range(trees) {
-		log.Printf("%s (tree)", o.hash)
-	}
-
-	for _, o := range(commits) {
-		log.Printf("%s (commit)", o.hash)
-	}
-
-	// references
-
-	for _, o := range(repo.References()) {
-		log.Printf("%s (ref %s)", o.hash, o.path)
-	}
+	log.Println("Finished.")
 
 }
 
