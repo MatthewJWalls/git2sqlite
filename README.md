@@ -13,6 +13,20 @@ Git2Sqlite takes a target Git repository, reads up the object
 database, and turns it into an sqlite database for future 
 interrogation.
 
+## Usage
+
+After installing this Go command, you can move into a git repository 
+(the top-level directory with the .git in it) and run just
+
+```git2sqlite```
+
+To execute the command. You can also provide a path:
+
+```git2sqlite path/to/repo```
+
+The command will output a file with the name <repository-name>.db into
+the current working directory.
+
 ## SQLite Schema
 
 ```sql
