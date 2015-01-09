@@ -1,0 +1,13 @@
+0000000000000000000000000000000000000000 06f45d794fb5ed69348ce2551cfbb5df847e2a4b Matthew Walls <mjw@commsoft.co.uk> 1420545095 +0000	clone: from https://github.com/MatthewJWalls/git2sqlite
+06f45d794fb5ed69348ce2551cfbb5df847e2a4b 06f45d794fb5ed69348ce2551cfbb5df847e2a4b Matthew Walls <mjw@commsoft.co.uk> 1420545095 +0000	checkout: moving from master to master
+06f45d794fb5ed69348ce2551cfbb5df847e2a4b 081bc998e713c3832ef57d25644b3ea8dad38b8d Matthew Walls <mjw@commsoft.co.uk> 1420640137 +0000	commit: Working commit parsing.
+081bc998e713c3832ef57d25644b3ea8dad38b8d 342a4aa4c63a63169ca1a3ce0bd0b2c715f4ff66 Matthew Walls <mjw@commsoft.co.uk> 1420643056 +0000	commit: Refactoring.
+342a4aa4c63a63169ca1a3ce0bd0b2c715f4ff66 8c82c54d0514c0da5abf0643d5f89f6146e7277b Matthew Walls <mjw@commsoft.co.uk> 1420647972 +0000	commit: Tree files now stored as hash not filename.
+8c82c54d0514c0da5abf0643d5f89f6146e7277b ac3b786a79198f27d1830049e3c90391a27d542b Matthew Walls <mjw@commsoft.co.uk> 1420707545 +0000	pull: Fast-forward
+ac3b786a79198f27d1830049e3c90391a27d542b 35503ebeba84171654bc0f66558e17da0964c518 Matthew Walls <mjw@commsoft.co.uk> 1420709992 +0000	commit: Rewrote db writer.
+35503ebeba84171654bc0f66558e17da0964c518 58b73fa5ef2bb33a0cd4eaefe8f0df7ab6279b85 Matthew Walls <mjw@commsoft.co.uk> 1420710675 +0000	commit: Refactored db transaction handling.
+58b73fa5ef2bb33a0cd4eaefe8f0df7ab6279b85 620dae1d8c03c241c6ae27c24e76548dbf5b37a1 Matthew Walls <mjw@commsoft.co.uk> 1420710942 +0000	commit: Whitespace fixes.
+620dae1d8c03c241c6ae27c24e76548dbf5b37a1 e1d98e88bfbac4e3d91a7ed9801fc3dbed94445f Matthew Walls <mjw@commsoft.co.uk> 1420711044 +0000	commit: Renamed files.
+e1d98e88bfbac4e3d91a7ed9801fc3dbed94445f 4b02279ed99bec1b3fc1b667bf7feb8ed08126ac Matthew Walls <mjw@commsoft.co.uk> 1420712311 +0000	commit: Implemented cmd line args.
+4b02279ed99bec1b3fc1b667bf7feb8ed08126ac 866e5c3d265ddae79017e5146d7646d75ef3defb Matthew Walls <mjw@commsoft.co.uk> 1420723323 +0000	commit: Updated README.
+866e5c3d265ddae79017e5146d7646d75ef3defb f5ea44b77490a0672a2b2a4c77977265056ae440 Matthew Walls <mjw@commsoft.co.uk> 1420793687 +0000	commit: No longer prints repo content to stoud.
