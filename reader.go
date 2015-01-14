@@ -27,6 +27,7 @@ import (
 	"log"
 	"fmt"
 	"bytes"
+	"regexp"
 	"strings"
 	"io/ioutil"
 	"path/filepath"
@@ -75,9 +76,12 @@ func (this GitRepository) Objects() ([]GitBlob, []GitTree, []GitCommit) {
 
 		commit := GitCommit{path: o.path, hash: o.hash, message:msg, parents:make([]string, 0, 2)}
 
+		emailMatcher := regexp.MustCompile(`<\S+@\S+>`);
+
 		for _, line := range(strings.Split(top, "\n")) {
 
 			parts := strings.Split(line, " ")
+			email := strings.Trim(emailMatcher.FindString(line), "<>")
 
 			switch parts[0] {
 			case "tree":
@@ -85,9 +89,9 @@ func (this GitRepository) Objects() ([]GitBlob, []GitTree, []GitCommit) {
 			case "parent":
 				commit.parents = append(commit.parents, parts[1])
 			case "author":
-				commit.author = parts[1]
+				commit.author = email
 			case "committer":
-				commit.committer = parts[1]
+				commit.committer = email
 				commit.date = parts[len(parts)-2]
 			}			
 
