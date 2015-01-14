@@ -18,11 +18,11 @@ interrogation.
 After installing this Go command, you can move into a git repository 
 (the top-level directory with the .git in it) and run just
 
-```git2sqlite```
+``` git2sqlite ```
 
 To execute the command. You can also provide a path:
 
-```git2sqlite path/to/repo```
+``` git2sqlite path/to/repo ```
 
 The command will output a file with the name <repository-name>.db into
 the current working directory.
