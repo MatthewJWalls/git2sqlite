@@ -26,7 +26,7 @@ type Unpacker struct {
 	pos int
 }
 
-func (this Unpacker) UInt(i int) int {
+func (this *Unpacker) UInt(i int) int {
 	var ret int32
 	buf := bytes.NewBuffer(this.raw[this.pos:this.pos+i])
 	err := binary.Read(buf, binary.LittleEndian, &ret)
@@ -39,21 +39,21 @@ func (this Unpacker) UInt(i int) int {
 	return int(ret)
 }
 
-func (this Unpacker) Skip(i int) {
+func (this *Unpacker) Skip(i int) {
 	this.pos += i
 }
 
-func (this Unpacker) Back(i int) {
+func (this *Unpacker) Back(i int) {
 	this.pos -= i
 }
 
-func (this Unpacker) String(i int) string {
+func (this *Unpacker) String(i int) string {
 	val := fmt.Sprintf("%s", this.raw[this.pos:this.pos+i])
 	this.pos = this.pos + i
 	return val
 }
 
-func (this Unpacker) Bytes(i int) []byte {
+func (this *Unpacker) Bytes(i int) []byte {
 	val := this.raw[this.pos:this.pos+i]
 	this.pos += i
 	return val
