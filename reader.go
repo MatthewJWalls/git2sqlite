@@ -32,10 +32,46 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"compress/zlib"
+	_ "encoding/binary"
 )
 
 type GitRepository struct {
 	location string
+}
+
+func (this GitRepository) Unpack() {
+
+	log.Println("Unpacking")
+
+	packs, err := ioutil.ReadDir(filepath.Join(this.location, "objects", "pack"))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, pack := range(packs) {
+		if strings.Contains(pack.Name(), ".pack") {
+
+			log.Printf("Got pack: %s", pack.Name())
+
+			path := filepath.Join(this.location, "objects", "pack", pack.Name())
+			
+			// read up the raw file into a buffer
+
+			rawbytes, readerr := ioutil.ReadFile(path)
+			
+			if readerr != nil {
+				log.Fatal(readerr)
+			}
+
+			unpacker := Unpacker{raw:rawbytes}
+
+			prefix := unpacker.String(4)
+			log.Println(prefix)
+			
+		}
+	}
+
 }
 
 // returns all the blobs, trees and commit objects in a git repo

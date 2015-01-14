@@ -39,6 +39,10 @@ func main() {
 	repo := GitRepository{REPOSITORY_NAME}
 	db := SQLiteDatabase{DATABASE_NAME}
 
+	// delete me
+	repo.Unpack()
+	os.Exit(0)
+
 	db.Create()
 	db.WriteRepository(repo)
 
