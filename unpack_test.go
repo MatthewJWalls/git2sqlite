@@ -7,7 +7,7 @@ import (
 
 func makeInteger(in int) []byte {
 	bs := make([]byte, 4)
-    binary.LittleEndian.PutUint32(bs, uint32(in))
+	binary.LittleEndian.PutUint32(bs, uint32(in))
 	return bs
 }
 
