@@ -8,7 +8,7 @@ usage:
 
     s := unpacker.String(4) // unpack 4 bytes as a string
     b := unpacker.Bytes(10) // unpack next 10 bytes
-    n := unpacker.Int(4)    // unpack next4 bytes as an int
+    n := unpacker.UInt(4)   // unpack next4 bytes as an unsigned int
     unpacker.Skip(4)        // skip forward 4 bytes
 
 */
