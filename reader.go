@@ -140,7 +140,6 @@ func (this GitRepository) Heads() []GitReference {
 	for _, head := range heads {
 
 		path := filepath.Join(this.location, "refs", "heads", head.Name())
-		name := filepath.Join("heads", head.Name())
 
 		rawbytes, readerr := ioutil.ReadFile(path)
 
@@ -148,7 +147,7 @@ func (this GitRepository) Heads() []GitReference {
 			log.Fatal(readerr)
 		}
 
-		reference := GitReference{name, strings.TrimSpace(string(rawbytes))}
+		reference := GitReference{head.Name(), strings.TrimSpace(string(rawbytes))}
 		references = append(references, reference)
 		
 	}
@@ -162,16 +161,15 @@ func (this GitRepository) Tags() []GitReference {
 
 	references := make([]GitReference, 0, 10)
 
-	heads, err := ioutil.ReadDir(filepath.Join(this.location, "refs", "tags"))
+	tags, err := ioutil.ReadDir(filepath.Join(this.location, "refs", "tags"))
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, head := range heads {
+	for _, tag := range tags {
 
-		path := filepath.Join(this.location, "refs", "tags", head.Name())
-		name := filepath.Join("tags", head.Name())
+		path := filepath.Join(this.location, "refs", "tags", tag.Name())
 
 		rawbytes, readerr := ioutil.ReadFile(path)
 
@@ -179,7 +177,7 @@ func (this GitRepository) Tags() []GitReference {
 			log.Fatal(readerr)
 		}
 
-		reference := GitReference{name, strings.TrimSpace(string(rawbytes))}
+		reference := GitReference{tag.Name(), strings.TrimSpace(string(rawbytes))}
 		references = append(references, reference)
 		
 	}

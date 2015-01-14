@@ -42,6 +42,6 @@ type GitTreeFile struct {
 }
 
 type GitReference struct {
-	path string
+	name string
 	hash string
 }

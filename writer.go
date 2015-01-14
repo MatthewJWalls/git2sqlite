@@ -53,7 +53,8 @@ func (this SQLiteDatabase) Create() {
       content text
     );
 
-    create table refs (path text not null primary key, hash text);
+    create table heads (name text not null primary key, hash text);
+    create table tags (name text not null primary key, hash text);
 
     `
 	_, stmterr := db.Exec(stmt)
@@ -82,23 +83,44 @@ func (this SQLiteDatabase) WriteRepository(repo GitRepository) {
 	this.writeBlobs(tx, blobs)
 	this.writeTrees(tx, trees)
 	this.writeCommits(tx, commits)
-	this.writeRefsToSQLite(tx, repo.References())
+	this.writeHeads(tx, repo.Heads())
+	this.writeHeads(tx, repo.Tags())
 
 	tx.Commit()
 
 }
 
-// utility function: inserts git reference data
-func (this SQLiteDatabase) writeRefsToSQLite(tx *sql.Tx, refs []GitReference) {
+// utility function: inserts git head reference data
+func (this SQLiteDatabase) writeHeads(tx *sql.Tx, refs []GitReference) {
 
-	stmt, stmerr := tx.Prepare("insert into refs values (?, ?)")
+	stmt, stmerr := tx.Prepare("insert into heads values (?, ?)")
 
 	if stmerr != nil {
 		log.Fatal(stmerr)
 	}
 
 	for _, o := range(refs) {
-		_, execerr := stmt.Exec(o.path, o.hash)
+		_, execerr := stmt.Exec(o.name, o.hash)
+
+		if execerr != nil {
+			log.Fatal(execerr)
+		}
+
+	}
+
+}
+
+// utility function: inserts git tag reference data
+func (this SQLiteDatabase) writeTags(tx *sql.Tx, refs []GitReference) {
+
+	stmt, stmerr := tx.Prepare("insert into tags values (?, ?)")
+
+	if stmerr != nil {
+		log.Fatal(stmerr)
+	}
+
+	for _, o := range(refs) {
+		_, execerr := stmt.Exec(o.name, o.hash)
 
 		if execerr != nil {
 			log.Fatal(execerr)

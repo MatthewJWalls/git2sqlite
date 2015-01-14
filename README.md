@@ -50,5 +50,10 @@ CREATE TABLE blobs (
       blob_hash text not null primary key, 
       content text
     );
-CREATE TABLE refs (path text not null primary key, hash text);
+CREATE TABLE heads (
+    name text not null primary key, hash text
+    );
+CREATE TABLE tags (
+    name text not null primary key, hash text
+    );
 ```
