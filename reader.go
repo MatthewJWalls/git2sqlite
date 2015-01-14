@@ -126,8 +126,8 @@ func (this GitRepository) Objects() ([]GitBlob, []GitTree, []GitCommit) {
 
 }
 
-// returns a list of all local (not remote) refs. Which are basically branches.
-func (this GitRepository) References() []GitReference {
+// returns a list of all local (not remote) heads.
+func (this GitRepository) Heads() []GitReference {
 
 	references := make([]GitReference, 0, 10)
 
@@ -155,6 +155,42 @@ func (this GitRepository) References() []GitReference {
 
 	return references
 
+}
+
+// returns a list of all tags.
+func (this GitRepository) Tags() []GitReference {
+
+	references := make([]GitReference, 0, 10)
+
+	heads, err := ioutil.ReadDir(filepath.Join(this.location, "refs", "tags"))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, head := range heads {
+
+		path := filepath.Join(this.location, "refs", "tags", head.Name())
+		name := filepath.Join("tags", head.Name())
+
+		rawbytes, readerr := ioutil.ReadFile(path)
+
+		if readerr != nil {
+			log.Fatal(readerr)
+		}
+
+		reference := GitReference{name, strings.TrimSpace(string(rawbytes))}
+		references = append(references, reference)
+		
+	}
+
+	return references
+
+}
+
+// returns a list of references
+func (this GitRepository) References() []GitReference {
+	return append(this.Heads(), this.Tags()...)
 }
 
 // utility function: returns a list of all object hashes in the repo

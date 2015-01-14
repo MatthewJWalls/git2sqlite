@@ -2,6 +2,27 @@ package main
 
 import "testing"
 
+func TestReferences(t *testing.T) {
+
+	repo := GitRepository{"test-data/samplerepo"}
+	rs := repo.References()
+	hs := repo.Heads()
+	ts := repo.Tags()
+
+	if len(rs) != len(hs) + len(ts) {
+		t.Error("Not enough References found")
+	}
+
+	if len(rs) == 0 {
+		t.Error("Not enough References found")
+	}
+
+	if len(ts) == 0 {
+		t.Error("Not enough Tags found")
+	}
+
+}
+
 func TestHashes(t *testing.T) {
 
 	repo := GitRepository{"test-data/samplerepo"}
