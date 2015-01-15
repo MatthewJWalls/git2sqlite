@@ -1,6 +1,6 @@
 /*
 
-This structure assists in unpacking binary files.
+This structure assists in unpacking git pack files.
 
 usage:
 
@@ -10,6 +10,8 @@ usage:
     b := unpacker.Bytes(10) // unpack next 10 bytes
     n := unpacker.UInt(4)   // unpack next4 bytes as an unsigned int
     unpacker.Skip(4)        // skip forward 4 bytes
+
+Unpacker assumes ints are Big Endian 32 bit numbers.
 
 */
 
@@ -30,7 +32,7 @@ type Unpacker struct {
 func (this *Unpacker) UInt(i int) int {
 	var ret int32
 	buf := bytes.NewBuffer(this.raw[this.pos:this.pos+i])
-	err := binary.Read(buf, binary.LittleEndian, &ret)
+	err := binary.Read(buf, binary.BigEndian, &ret)
 
 	if err != nil {
 		log.Fatal(err)

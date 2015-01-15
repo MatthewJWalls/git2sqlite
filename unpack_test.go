@@ -2,29 +2,65 @@ package main
 
 import (
 	"testing"
+	"log"
+	"io/ioutil"
+	"path/filepath"
 	"encoding/binary"
 )
 
 func makeInteger(in int) []byte {
 	bs := make([]byte, 4)
-	binary.LittleEndian.PutUint32(bs, uint32(in))
+	binary.BigEndian.PutUint32(bs, uint32(in))
 	return bs
 }
 
-func TestEverything(t *testing.T) {
+func TestPackFileUnpack(t *testing.T) {
 
-	stringbytes := []byte{'t', 'e', 's', 't'}
-	numberbytes := makeInteger(1337)
-	allbytes := append(stringbytes, numberbytes...)
+	path := filepath.Join(
+		"test-data", 
+		"samplerepo", 
+		"objects", 
+		"pack", 
+		"pack-f15a2879b1e01aece417a8c1d06f5079858633f4.pack",
+	)
 
-	unpacker := Unpacker{raw:allbytes}
-
-	if unpacker.String(4) != "test" {
-		t.Error("Did not read string properly")
+	rawbytes, readerr := ioutil.ReadFile(path)
+			
+	if readerr != nil {
+		log.Fatal(readerr)
 	}
 
-	if unpacker.UInt(4) != 1337 {
-		t.Errorf("Did not read integer properly")
+	unpacker := Unpacker{raw:rawbytes}
+
+	signature := unpacker.String(4)
+	version := unpacker.UInt(4)
+	entries := unpacker.UInt(4)
+	
+	if signature != "PACK" {
+		t.Error("Did not unpack correct signature.")
+	}
+
+	if version != 2 {
+		t.Error("Did not unpack correct version.")
+	}
+
+	if entries <= 0 {
+		t.Error("Did not unpack correct entry count.")
+	}
+
+	first := unpacker.Bytes(1)[0]
+	finished := first >> 8 == 0
+	otype := first << 1 >> 5
+
+	log.Printf("first byte: %b", first)
+	log.Printf("finished?: %s", finished)
+	log.Printf("type: %b", otype)
+
+	for finished = false; finished == false; {
+		next := unpacker.Bytes(1)[0]
+		finished = next >> 8 == 0
+		log.Printf("next bytes: %b", next)
+		log.Printf("finished?: %s", finished)
 	}
 
 }
